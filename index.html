@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head>
+    <title>Build A Reverse Shell</title>
+    <style>
+        /* Add the custom font */
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('font.ttf') format('truetype');
+        }
+
+        body {
+            font-family: 'CustomFont', monospace;
+            background-color: #0d1117;
+            color: #60c1ad;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background: #60c1ad;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            font-family: 'CustomFont', monospace;
+            font-size: 16px;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .button:hover {
+            transform: scale(1.1);
+            background-color: #60c1ad;
+        }
+
+        .output {
+            border: 1px solid #60c1ad;
+            padding: 10px;
+            margin: 20px;
+            background-color: #0d1117;
+            color: #60c1ad;
+            display: inline-block;
+            font-family: monospace;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .locked {
+            background-color: rgba(114, 135, 132, 0.68);
+            cursor: not-allowed;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #60c1ad; }
+            50% { box-shadow: 0 0 20px #60c1ad; }
+            100% { box-shadow: 0 0 5px #60c1ad; }
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 10px;
+            background: #60c1ad;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+<h1>Set Up the Reverse Shell</h1>
+
+<div id="timer">00:00:00</div> <!-- Timer display -->
+
+<div id="progress-bar"></div>
+
+<div id="stage1" class="stage">
+    <h2>Step 1: Prepare the Attacker's Machine</h2>
+    <p>What should the attacker do to prepare?</p>
+    <button class="button" onclick="checkAnswer(1, 'a')">A) Wait for the victim to call</button>
+    <button class="button" onclick="checkAnswer(1, 'b')">B) Send a direct message</button>
+    <div id="stage1-output" class="output hidden"></div>
+</div>
+
+<div id="stage2" class="stage hidden">
+    <h2>Step 2: Deliver the Payload</h2>
+    <p>How should the attacker send instructions to the victim's computer?</p>
+    <button class="button" onclick="checkAnswer(2, 'a')">A) Attach it to an email</button>
+    <button class="button" onclick="checkAnswer(2, 'b')">B) Send it as a text message</button>
+    <div id="stage2-output" class="output hidden"></div>
+</div>
+
+<div id="stage3" class="stage hidden">
+    <h2>Step 3: Wait for the Connection</h2>
+    <p>The victim runs the instructions. What happens next?</p>
+    <button class="button" onclick="checkAnswer(3, 'a')">A) The victim connects back to the attacker</button>
+    <button class="button" onclick="checkAnswer(3, 'b')">B) The attacker connects to the victim</button>
+    <div id="stage3-output" class="output hidden"></div>
+</div>
+
+<script>
+    let attempts = 1;
+
+    let startTime = Date.now(); // Start time of the timer
+    let timerInterval; // To store the interval reference
+
+    // Function to update the timer every 10 milliseconds
+    function updateTimer() {
+        const currentTime = Date.now();
+        const elapsed = currentTime - startTime; // Time in milliseconds
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        const centiseconds = Math.floor((elapsed % 1000) / 10); // Get centiseconds (hundredths of a second)
+
+        // Format the time in MM:SS:CC format
+        const formattedTime = `${pad(minutes)}:${pad(seconds)}:${pad(centiseconds, 2)}`;
+        document.getElementById("timer").textContent = formattedTime;
+    }
+
+    // Helper function to pad numbers with leading zeros
+    function pad(number, length = 2) {
+        return number.toString().padStart(length, '0');
+    }
+
+    // Start the timer interval
+    timerInterval = setInterval(updateTimer, 10); // Update every 10 milliseconds
+
+    function checkAnswer(stage, choice) {
+        const correctAnswers = {
+            1: 'a', // Wait for the victim to call
+            2: 'a', // Attach it to an email
+            3: 'a'  // Victim connects back to the attacker
+        };
+        const output = document.getElementById(`stage${stage}-output`);
+        const buttons = document.querySelectorAll(`#stage${stage} .button`);
+
+        // Lock the buttons and check answer
+        buttons.forEach(btn => {
+            btn.classList.add("locked");
+            btn.setAttribute("disabled", "true");
+        });
+
+        if (choice === correctAnswers[stage]) {
+            output.textContent = "✅ Correct! Proceeding to the next step...";
+            output.classList.remove("hidden");
+            output.style.animation = "glow 1s ease-out";
+
+            updateProgress(stage);
+
+            if (stage < 3) {
+                document.getElementById(`stage${stage + 1}`).classList.remove("hidden");
+            } else {
+                clearInterval(timerInterval);
+                const ordinals = ['', 'st', 'nd', 'rd', 'th'];
+
+                const suffix = (attempts % 10 === 1 && attempts % 100 !== 11) ? ordinals[1] :
+                    (attempts % 10 === 2 && attempts % 100 !== 12) ? ordinals[2] :
+                        (attempts % 10 === 3 && attempts % 100 !== 13) ? ordinals[3] :
+                            ordinals[4];
+
+                output.textContent = `🎉 Congratulations!\nYou successfully set up the reverse shell in your ${attempts}${suffix} attempt!`;
+            }
+        } else {
+            attempts++;
+            output.textContent = "❌ Wrong choice,,,";
+            output.classList.remove("hidden");
+
+            // Create "Try Again" button
+            const retryMessage = document.createElement("p");
+            retryMessage.textContent = "You're cooked! Wanna Try Again?";
+            retryMessage.style.marginTop = "20px";
+            output.appendChild(retryMessage);
+
+            const tryAgainButton = document.createElement("button");
+            tryAgainButton.className = "button";
+            tryAgainButton.textContent = "↻";
+            tryAgainButton.onclick = function() { resetGame(); };
+            output.appendChild(tryAgainButton);
+
+            // Shake buttons
+            buttons.forEach(btn => {
+                btn.style.animation = "shake 0.5s ease";
+                setTimeout(() => btn.style.animation = "", 500);
+            });
+        }
+    }
+
+    function updateProgress(stage) {
+        const progressBar = document.getElementById('progress-bar');
+        const progress = (stage / 3) * 100; // 3 is the total number of stages
+        progressBar.style.width = progress + '%';
+    }
+
+    function resetGame() {
+        // Hide all stages and reset progress bar
+        document.querySelectorAll('.stage').forEach(stage => stage.classList.add("hidden"));
+        document.getElementById('progress-bar').style.width = "0%";
+
+        // Reset stage 1 and show it
+        document.getElementById('stage1').classList.remove("hidden");
+
+        // Reset outputs and unlock buttons
+        document.querySelectorAll('.output').forEach(output => output.classList.add("hidden"));
+        document.querySelectorAll('.button').forEach(button => {
+            button.classList.remove("locked");
+            button.removeAttribute("disabled");
+        });
+    }
+</script>
+</body>
+</html>
