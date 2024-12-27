@@ -382,7 +382,7 @@
                     victoryMessage.appendChild(congratsText);
 
                     const successText = document.createElement("p");
-                    successText.textContent = "You successfully set up the reverse shell in your 🥁🥁🥁";
+                    successText.textContent = `Boom! Reverse shell deployed! 💥`;
                     victoryMessage.appendChild(successText);
 
                     const attemptsText = document.createElement("p"); // Create a new paragraph for attempts
@@ -391,8 +391,8 @@
                         (attempts % 10 === 2 && attempts % 100 !== 12) ? ordinals[2] :
                             (attempts % 10 === 3 && attempts % 100 !== 13) ? ordinals[3] :
                                 ordinals[4];
-                    attemptsText.textContent = `${attempts}${suffix} attempt!`;
-                    attemptsText.id = "attempts-text"; // Give it an ID for styling
+                    attemptsText.textContent = `After ${attempts} tr${(attempts === 1) ? "y" : "ies"}, you've breached the system!`;
+                    attemptsText.id = "attempts-text"; 
                     victoryMessage.appendChild(attemptsText);
 
                     const timeText = document.createElement("p");
