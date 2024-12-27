@@ -2,9 +2,8 @@
 <html>
 <meta charset="UTF-8">
 <head>
-    <title>Build A Reverse Shell</title>
+    <title>Set Up the Reverse S</title>
     <style>
-        /* Add the custom font */
         @font-face {
             font-family: 'CustomFont';
             src: url('font.ttf') format('truetype');
@@ -74,6 +73,152 @@
             background: #60c1ad;
             margin: 20px auto;
         }
+
+        #transition-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #93da93;
+            z-index: 1000;
+        }
+
+        .lds-dual-ring {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+        }
+
+        .lds-dual-ring:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #93da93;
+            border-color: #93da93 transparent #93da93 transparent;
+            animation: lds-dual-ring 1.2s linear infinite;
+        }
+
+        @keyframes lds-dual-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #victory-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #60c1ad;
+            display: flex;
+            flex-direction: column; /* Stack vertically */
+            justify-content: center; /* Center vertically on the screen */
+            align-items: center; /* Center horizontally on the screen */
+            z-index: 1002;
+        }
+
+        #victory-content {
+            display: none;
+            background-color: #1a202a;
+            border: 2px solid rgba(224, 180, 255, 1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(224, 180, 255, 0.5);
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 20px; /* Add some space between the box and the button */
+        }
+
+        .victory-content-layout {
+            display: flex;
+            flex-direction: row; /* Image and message side by side */
+            align-items: center; /* Vertically align items */
+            justify-content: center; /* Horizontally center */
+            text-align: left; /* Align text to the left within message area */
+        }
+
+        #victory-message {
+            flex: 1; /* Allow the message to take up available space */
+            padding-left: 20px; /* Space between image and text */
+            text-align: center;
+            color: rgba(224, 180, 255, 1)
+        }
+
+        #victory-icon {
+            animation: pulse 1.5s infinite ease-in-out;
+            margin-right: 20px;
+        }
+
+        /* Style the button for better visibility on the dark background */
+        #victory-screen .button {
+            background-color: rgba(224, 180, 255, 1);
+            color: #0d1117; /* Darker text for contrast */
+            padding: 15px 30px; /* Bigger padding */
+            font-size: 1.2em; /* Slightly larger font */
+        }
+
+        @keyframes glow-attempts {
+            0%, 100% { text-shadow: 0 0 5px transparent; } /* No glow */
+            50% { text-shadow: 0 0 15px rgba(224, 180, 255, 0.5); } /* Glow */
+        }
+
+        #attempts-text {
+            animation: glow-attempts 2s infinite ease-in-out; /* Apply the animation */
+            margin-top: 10px; /* Add some spacing above the attempts text */
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #detection-icon, #transition-icon {
+            animation: pulse 1.5s infinite ease-in-out; /* Apply the animation */
+        }
+
+        #found-out-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #d17373;
+            z-index: 1000;
+        }
+
+        #found-out-message{
+            margin-top: 20px;
+        }
+        .retry-button{
+            margin-top: 20px;
+            background-color: #d17373;
+        }
+
+        .retry-button:hover {
+            transform: scale(1.1);
+            background-color: #d17373; /* Darker blue on hover */
+        }
     </style>
 </head>
 <body>
@@ -81,49 +226,87 @@
 
 <div id="timer">00:00:00</div> <!-- Timer display -->
 
-<div id="progress-bar"></div>
+<div id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
 
-<div id="stage1" class="stage">
-    <h2>Step 1: Prepare the Attacker's Machine</h2>
-    <p>What should the attacker do to prepare?</p>
-    <button class="button" onclick="checkAnswer(1, 'a')">A) Wait for the victim to call</button>
-    <button class="button" onclick="checkAnswer(1, 'b')">B) Send a direct message</button>
+<div id="transition-screen">
+    <img id="transition-icon" src="worm.png" alt="Transition" style="max-width: 100px;">
+    <div id="transition-message" style="margin-top: 20px;"></div>
+    <div class="lds-dual-ring"></div>
+</div>
+
+<div id="found-out-screen">
+    <img id="detection-icon" src="scan.png" alt="Detected!" style="max-width: 100px;">
+    <div id="found-out-message" style="margin-top: 20px;"></div>
+    <button class="button retry-button" onclick="tryAgain()">↻ Try Again</button>
+</div>
+
+<div id="stage1" class="stage" role="region" aria-labelledby="stage1-heading">
+    <h2>Stage 1: Your Station</h2>
+    <p>You’re preparing to receive a connection. What do you do?</p>
+    <button class="button" onclick="checkAnswer(1, 'a')">A) Send a ping to the target</button>
+    <button class="button" onclick="checkAnswer(1, 'b')">B) Set up a listener</button>
     <div id="stage1-output" class="output hidden"></div>
 </div>
 
-<div id="stage2" class="stage hidden">
-    <h2>Step 2: Deliver the Payload</h2>
-    <p>How should the attacker send instructions to the victim's computer?</p>
-    <button class="button" onclick="checkAnswer(2, 'a')">A) Attach it to an email</button>
-    <button class="button" onclick="checkAnswer(2, 'b')">B) Send it as a text message</button>
+<div id="stage2" class="stage hidden" role="region" aria-labelledby="stage2-heading">
+    <h2 id="stage2-heading">Stage 2: Crafting the Malware</h2>
+    <p>What’s your next move?</p>
+    <button class="button" onclick="checkAnswer(2, 'a')">A) Prepare a payload</button>
+    <button class="button" onclick="checkAnswer(2, 'b')">B) Download a pre-made virus from the internet</button>
     <div id="stage2-output" class="output hidden"></div>
 </div>
 
-<div id="stage3" class="stage hidden">
-    <h2>Step 3: Wait for the Connection</h2>
-    <p>The victim runs the instructions. What happens next?</p>
-    <button class="button" onclick="checkAnswer(3, 'a')">A) The victim connects back to the attacker</button>
-    <button class="button" onclick="checkAnswer(3, 'b')">B) The attacker connects to the victim</button>
+<div id="stage3" class="stage hidden" role="region" aria-labelledby="stage3-heading">
+    <h2 id="stage3-heading">Stage 3: Delivering the Payload</h2>
+    <p>How will you deliver the payload?</p>
+    <button class="button" onclick="checkAnswer(3, 'a')">A) Post the payload on a public forum</button>
+    <button class="button" onclick="checkAnswer(3, 'b')">B) Send a phishing email</button>
     <div id="stage3-output" class="output hidden"></div>
+</div>
+
+<div id="stage4" class="stage hidden" role="region" aria-labelledby="stage4-heading">
+    <h2 id="stage4-heading">Stage 4: Gaining Access</h2>
+    <p>The victim ran the payload. What’s your first move?</p>
+    <button class="button" onclick="checkAnswer(4, 'a')">A) Check the victim’s system logs</button>
+    <button class="button" onclick="checkAnswer(4, 'b')">B) Open a shell</button>
+    <div id="stage4-output" class="output hidden"></div>
+</div>
+
+<div id="stage5" class="stage hidden" role="region" aria-labelledby="stage5-heading">
+    <h2 id="stage5-heading">Step 5: Maintaining Access</h2>
+    <p>The victim has connected back. What’s your next move?</p>
+    <button class="button" onclick="checkAnswer(5, 'a')">A) Install a backdoor</button>
+    <button class="button" onclick="checkAnswer(5, 'b')">B) Run a command that crashes the system</button>
+    <div id="stage5-output" class="output hidden"></div>
+</div>
+
+<div id="victory-screen">
+    <div id="victory-content" class="victory-content-layout">
+        <img id="victory-icon" src="malware.png" alt="Victory!" style="max-width: 100px;">
+        <div id="victory-message"></div>
+    </div>
+    <button class="button" onclick="resetGame()">Play Again</button>
 </div>
 
 <script>
     let attempts = 1;
 
+    let timerRunning = true;
     let startTime = Date.now(); // Start time of the timer
     let timerInterval; // To store the interval reference
 
     // Function to update the timer every 10 milliseconds
     function updateTimer() {
-        const currentTime = Date.now();
-        const elapsed = currentTime - startTime; // Time in milliseconds
-        const minutes = Math.floor(elapsed / 60000);
-        const seconds = Math.floor((elapsed % 60000) / 1000);
-        const centiseconds = Math.floor((elapsed % 1000) / 10); // Get centiseconds (hundredths of a second)
+        if (timerRunning) {
+            const currentTime = Date.now();
+            elapsed = currentTime - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const centiseconds = Math.floor((elapsed % 1000) / 10);
 
-        // Format the time in MM:SS:CC format
-        const formattedTime = `${pad(minutes)}:${pad(seconds)}:${pad(centiseconds, 2)}`;
-        document.getElementById("timer").textContent = formattedTime;
+            const formattedTime = `${pad(minutes)}:${pad(seconds)}:${pad(centiseconds, 2)}`;
+            document.getElementById("timer").textContent = formattedTime;
+        }
     }
 
     // Helper function to pad numbers with leading zeros
@@ -136,10 +319,19 @@
 
     function checkAnswer(stage, choice) {
         const correctAnswers = {
-            1: 'a', // Wait for the victim to call
+            1: 'b', // Wait for the victim to call
             2: 'a', // Attach it to an email
-            3: 'a'  // Victim connects back to the attacker
+            3: 'b',  // Victim connects back to the attacker
+            4: 'b',
+            5: 'a'
         };
+
+        const transitionScreen = document.getElementById("transition-screen");
+        const transitionMessage = document.getElementById("transition-message");
+
+        const lossScreen = document.getElementById("found-out-screen");
+        const lossMessage = document.getElementById("found-out-message");
+
         const output = document.getElementById(`stage${stage}-output`);
         const buttons = document.querySelectorAll(`#stage${stage} .button`);
 
@@ -150,57 +342,95 @@
         });
 
         if (choice === correctAnswers[stage]) {
-            output.textContent = "✅ Correct! Proceeding to the next step...";
-            output.classList.remove("hidden");
-            output.style.animation = "glow 1s ease-out";
+
+            let explanations = [
+                "Setting up a listener prepares your computer to wait for the victim to connect back.",
+                "A payload contains the instructions for the victim’s computer to call you back.",
+                "Phishing emails are a common way to trick victims into running the payload.",
+                "Opening a shell allows you to interact with the victim’s computer.",
+                "Installing a backdoor ensures you can maintain long-term access to the system."
+            ]
+
+            transitionMessage.innerHTML = `✅ Correct!<br>${explanations[stage - 1]}`;
+            transitionScreen.style.display = "flex";
 
             updateProgress(stage);
 
-            if (stage < 3) {
-                document.getElementById(`stage${stage + 1}`).classList.remove("hidden");
-            } else {
-                clearInterval(timerInterval);
-                const ordinals = ['', 'st', 'nd', 'rd', 'th'];
+            timerRunning = false;
+            clearInterval(timerInterval);
 
-                const suffix = (attempts % 10 === 1 && attempts % 100 !== 11) ? ordinals[1] :
-                    (attempts % 10 === 2 && attempts % 100 !== 12) ? ordinals[2] :
-                        (attempts % 10 === 3 && attempts % 100 !== 13) ? ordinals[3] :
-                            ordinals[4];
+            setTimeout(() => {
+                transitionScreen.style.display = "none";
 
-                output.textContent = `🎉 Congratulations!\nYou successfully set up the reverse shell in your ${attempts}${suffix} attempt!`;
-            }
-        } else {
+                timerRunning = true;
+                startTime = Date.now() - (elapsed)
+                timerInterval = setInterval(updateTimer, 10);
+
+                if (stage < 5) {
+                    document.getElementById(`stage${stage + 1}`).classList.remove("hidden");
+                }
+
+                else {
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+
+                    const victoryMessage = document.getElementById("victory-message");
+                    victoryMessage.innerHTML = ""; // Clear existing content
+
+                    const congratsText = document.createElement("p");
+                    congratsText.textContent = "Congratulations!";
+                    victoryMessage.appendChild(congratsText);
+
+                    const successText = document.createElement("p");
+                    successText.textContent = "You successfully set up the reverse shell in your 🥁🥁🥁";
+                    victoryMessage.appendChild(successText);
+
+                    const attemptsText = document.createElement("p"); // Create a new paragraph for attempts
+                    const ordinals = ['', 'st', 'nd', 'rd', 'th'];
+                    const suffix = (attempts % 10 === 1 && attempts % 100 !== 11) ? ordinals[1] :
+                        (attempts % 10 === 2 && attempts % 100 !== 12) ? ordinals[2] :
+                            (attempts % 10 === 3 && attempts % 100 !== 13) ? ordinals[3] :
+                                ordinals[4];
+                    attemptsText.textContent = `${attempts}${suffix} attempt!`;
+                    attemptsText.id = "attempts-text"; // Give it an ID for styling
+                    victoryMessage.appendChild(attemptsText);
+
+                    const timeText = document.createElement("p");
+                    timeText.textContent = `Time Taken: ${document.getElementById("timer").textContent}`;
+                    victoryMessage.appendChild(timeText);
+
+                    document.getElementById("victory-content").style.display = "flex"; // Show the content box
+                    document.getElementById("victory-screen").style.display = "flex"; // Show the overlay
+                }
+
+
+            }, 3000);
+        }
+
+        else {
             attempts++;
-            output.textContent = "❌ Wrong choice,,,";
-            output.classList.remove("hidden");
 
-            // Create "Try Again" button
-            const retryMessage = document.createElement("p");
-            retryMessage.textContent = "You're cooked! Wanna Try Again?";
-            retryMessage.style.marginTop = "20px";
-            output.appendChild(retryMessage);
+            let explanations = [
+                "Sending a ping might alert the victim by showing unusual network activity. You need to set up a listener to remain undetected.",
+                "Downloading a pre-made virus from the internet is highly suspicious and can be easily detected by antivirus software and intrusion detection systems. Plus, it might not fit your specific needs.",
+                "Posting the payload on a public forum is highly likely to be noticed and removed quickly. You don't want it to be traced back to you!",
+                "Checking the victim’s system logs is unnecessary and might alert them. Opening a shell lets you control the system directly.",
+                "Running a command that crashes the system will immediately alert the victim and terminate your access. Even if the victim did you dirty, play the long game and steal some data first!"
+            ]
 
-            const tryAgainButton = document.createElement("button");
-            tryAgainButton.className = "button";
-            tryAgainButton.textContent = "↻";
-            tryAgainButton.onclick = function() { resetGame(); };
-            output.appendChild(tryAgainButton);
-
-            // Shake buttons
-            buttons.forEach(btn => {
-                btn.style.animation = "shake 0.5s ease";
-                setTimeout(() => btn.style.animation = "", 500);
-            });
+            lossScreen.style.display = "flex";
+            lossMessage.innerHTML = `❌ You've been detected! <br> ${explanations[stage - 1]}`;
         }
     }
 
     function updateProgress(stage) {
         const progressBar = document.getElementById('progress-bar');
-        const progress = (stage / 3) * 100; // 3 is the total number of stages
+        const progress = (stage / 5) * 100; // 3 is the total number of stages
         progressBar.style.width = progress + '%';
+        progressBar.setAttribute('aria-valuenow', `${progress}`);
     }
 
-    function resetGame() {
+    function tryAgain() {
         // Hide all stages and reset progress bar
         document.querySelectorAll('.stage').forEach(stage => stage.classList.add("hidden"));
         document.getElementById('progress-bar').style.width = "0%";
@@ -214,7 +444,22 @@
             button.classList.remove("locked");
             button.removeAttribute("disabled");
         });
+
+        // Hide victory screen and loss screen
+        document.getElementById('victory-screen').style.display = "none";
+        document.getElementById('found-out-screen').style.display = "none";
     }
+    function resetGame() {
+        tryAgain(); // Call the tryAgain function to reset the game state
+
+        attempts = 1; // Reset attempts
+        startTime = Date.now(); // Reset the timer
+        elapsed = 0;
+        timerRunning = true;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 10);
+    }
+    resetGame();
 </script>
 </body>
 </html>
